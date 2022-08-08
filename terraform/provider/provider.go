@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/ATenderholt/rainbow-test/names"
 	"github.com/ATenderholt/rainbow-test/terraform/conns"
 	"github.com/ATenderholt/rainbow-test/terraform/service/s3"
 	tftags "github.com/ATenderholt/rainbow-test/terraform/tags"
 	"github.com/ATenderholt/rainbow-test/terraform/verify"
-	"github.com/ATenderholt/rainbow-test/names"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	awsbase "github.com/hashicorp/aws-sdk-go-base/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -283,20 +283,23 @@ func New(_ context.Context) (*schema.Provider, error) {
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
+	endpoints := make(map[string]string)
+	endpoints["s3"] = "http://localhost:9000"
+
 	config := conns.Config{
 		AccessKey:                      d.Get("access_key").(string),
 		DefaultTagsConfig:              expandProviderDefaultTags(d.Get("default_tags").([]interface{})),
 		CustomCABundle:                 d.Get("custom_ca_bundle").(string),
 		EC2MetadataServiceEndpoint:     d.Get("ec2_metadata_service_endpoint").(string),
 		EC2MetadataServiceEndpointMode: d.Get("ec2_metadata_service_endpoint_mode").(string),
-		Endpoints:                      make(map[string]string),
+		Endpoints:                      endpoints,
 		HTTPProxy:                      d.Get("http_proxy").(string),
 		IgnoreTagsConfig:               expandProviderIgnoreTags(d.Get("ignore_tags").([]interface{})),
 		Insecure:                       d.Get("insecure").(bool),
 		MaxRetries:                     25, // Set default here, not in schema (muxing with v6 provider).
 		Profile:                        d.Get("profile").(string),
 		Region:                         d.Get("region").(string),
-		S3UsePathStyle:                 d.Get("s3_use_path_style").(bool) || d.Get("s3_force_path_style").(bool),
+		S3UsePathStyle:                 true, // d.Get("s3_use_path_style").(bool) || d.Get("s3_force_path_style").(bool),
 		SecretKey:                      d.Get("secret_key").(string),
 		SkipCredsValidation:            d.Get("skip_credentials_validation").(bool),
 		SkipGetEC2Platforms:            d.Get("skip_get_ec2_platforms").(bool),
